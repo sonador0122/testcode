@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        
+<mapper namespace="com.securesw.cartDao">
+    <resultMap type="CartVO" id="cartResultMap">
+    	<result column="board_idx" property="boardIdx"/>
+    	<result column="member_email" property="memberEmail"/>
+    	<result column="idx" property="idx"/>
+    	<result column="quantity" property="quantity"/>
+    	<result column="total_price" property="price"/>
+    	<result column="image_path" property="imagePath"/>
+    	<result column="title" property="title"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="CartVO">
+        INSERT INTO cart_tbl (board_idx, member_email, quantity)
+        VALUE (#{boardIdx},#{memberEmail},#{quantity})
+    </insert>
+    
+    <select id="selectList" parameterType="String" resultMap="cartResultMap">
+      select cart.board_idx, cart.idx, total_price, title, cart.member_email, cart.quantity, image_path from cart_tbl as cart
+      inner join board_tbl as board on cart.board_idx=board.idx
+      where cart.member_email like #{memberEmail}
+      order by cart.idx desc
+    </select>
+    
+    <delete id="delete" parameterType="int">
+      delete from cart_tbl where idx=#{idx}
+    </delete>
+    
+    <delete id="deleteMap" parameterType="map">
+      delete from cart_tbl where member_email=#{memberEmail} and board_idx=#{boardIdx}
+    </delete>
+    
+    <select id="selectOne" parameterType="map" resultMap="cartResultMap">
+      select cart.board_idx, cart.idx, cart.member_email, total_price, cart.quantity from cart_tbl as cart
+      inner join board_tbl as board on cart.board_idx=board.idx
+      where cart.member_email=#{memberEmail} and cart.board_idx=#{boardIdx}
+    </select>
+    
+    <update id="changeMap" parameterType="map">
+   		update cart_tbl set quantity=#{quantity} where idx=#{idx}
+    </update>
+</mapper>

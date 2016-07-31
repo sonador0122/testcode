@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.securesw.boardDao">
+    <resultMap type="BoardVO" id="boardResultMap">
+        <id column="idx"  property="idx"/>
+        <result column="group_idx" property="groupIdx"/>
+        <result column="sequence_idx" property="sequenceIdx"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="posting_date" property="postingDate"/>
+        <result column="read_count" property="readCount"/>
+        <result column="comment_count" property="commentCount"/>
+        <result column="file_count" property="fileCount"/>
+        <result column="products_count" property="productsCount"/>
+        <result column="member_idx" property="memberIdx"/>
+        <result column="member_email" property="memberEmail"/>
+        <result column="separator_name" property="separatorName"/>
+        <result column="file_idx" property="fileIdx"/>
+        <result column="total_price" property="totalPrice"/>
+        <result column="image_path" property="imagePath"/>
+    </resultMap>
+
+    <select id="selectCount" resultType="int">
+        SELECT COUNT(*) FROM board_tbl
+    </select>
+
+    <select id="selectCountBySeparator" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM board_tbl WHERE separator_name = #{separatorName}
+    </select>
+
+    <select id="selectCountByHashMap" parameterType="hashmap" resultType="int">
+        SELECT COUNT(*) FROM board_tbl
+
+        <if test="separatorName != NULL or keyword != NULL">
+            WHERE
+
+            <if test="separatorName != NULL">
+                separator_name = '${separatorName}'
+            </if>
+
+            <if test="separatorName != NULL and keyword != NULL">
+                AND
+            </if>
+
+            <if test="keyword != NULL">
+                title LIKE CONCAT('%', '${keyword}', '%') OR content LIKE CONCAT('%', '${keyword}', '%') OR member_email LIKE CONCAT('%', '${keyword}', '%')
+            </if>
+        </if>
+
+    </select>
+
+    <select id="selectList" resultMap="boardResultMap">
+        SELECT * FROM board_tbl ORDER BY sequence_idx DESC LIMIT #{offset},#{limit}
+    </select>
+
+    <select id="selectListBySeparator" parameterType="hashmap" resultMap="boardResultMap">
+        SELECT * FROM board_tbl WHERE separator_name = '${separatorName}' ORDER BY sequence_idx DESC LIMIT '${rowBounds.offset}','${rowBounds.limit}'
+    </select>
+
+    <select id="selectListByHashMap" parameterType="hashmap" resultMap="boardResultMap">
+        SELECT * FROM board_tbl        <if test="separatorName != NULL or keyword != NULL">            WHERE            
+        <if test="separatorName != NULL">               
+        separator_name = '${separatorName}'       
+        </if>            
+        <if test="separatorName != NULL and keyword != NULL">                
+        AND 
+        </if>            
+        <if test="keyword != NULL">
+		title LIKE CONCAT('%', '${keyword}', '%') OR content LIKE CONCAT('%', '${keyword}', '%') OR member_email LIKE CONCAT('%', '${keyword}', '%') </if></if> ORDER BY sequence_idx DESC    
+    </select>
+
+    <insert id="insert" parameterType="BoardVO">
+        INSERT INTO board_tbl (group_idx, sequence_idx, title, content, posting_date, read_count, comment_count, file_count, products_count, member_idx, member_email, separator_name, total_price, image_path)
+        VALUE (#{groupIdx},#{sequenceIdx},#{title},#{content},now(),0,0,0,0,#{memberIdx},#{memberEmail},#{separatorName},#{totalPrice},#{imagePath})
+    </insert>
+
+    <select id="selectOne" parameterType="int" resultMap="boardResultMap">
+        SELECT * FROM board_tbl WHERE idx = #{VALUE}
+    </select>
+
+    <update id="increaseReadCount" parameterType="int">
+        UPDATE board_tbl SET read_count = read_count + 1 WHERE idx = #{VALUE}
+    </update>
+
+    <select id="selectLastSequenceIdx" parameterType="hashmap" resultType="String">
+        SELECT min(sequence_idx) FROM board_tbl WHERE sequence_idx <![CDATA[ < ]]> #{searchMaxSeqNum} and sequence_idx <![CDATA[ >= ]]> #{searchMinSeqNum}
+    </select>
+
+    <update id="update" parameterType="BoardVO">
+        UPDATE board_tbl
+        <set>
+            <if test="title != null">title = #{title},</if>
+            <if test="content != null">content = #{content},</if>
+            <if test="totalPrice != null">total_price = #{totalPrice}</if>
+            <if test="imagePath != null">image_path = #{imagePath}</if>
+        </set>
+        WHERE idx = #{idx}
+    </update>
+
+    <update id="setProductsCountZero" parameterType="int">
+        UPDATE board_tbl SET products_count = 0 WHERE idx = #{VALUE}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM board_tbl WHERE idx = #{VALUE}
+    </delete>
+
+    <select id="selectGroupIdx" parameterType="String" resultType="int">
+        SELECT next_value FROM tbl_idx_sequence WHERE sequence_name = #{NAME} FOR UPDATE
+    </select>
+
+    <update id="updateGroupIdx" parameterType="String">
+        UPDATE tbl_idx_sequence SET next_value = next_value + 1 WHERE sequence_name = #{NAME}
+    </update>
+
+    <select id="selectLastBoardIdxByEmail" parameterType="String" resultType="int">
+        SELECT idx FROM board_tbl WHERE member_email = #{memberEmail} ORDER BY idx DESC LIMIT 0,1
+    </select>
+</mapper>

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.securesw.memberDao">
+    <resultMap type="MemberVO" id="memberResultMap">
+        <id column="idx" property="idx"/>
+        <result column="first_name" property="firstName"/>
+        <result column="last_name" property="lastName"/>
+        <result column="email" property="email"/>
+        <result column="password" property="password"/>
+        <result column="address" property="address"/>
+        <result column="postcode" property="postcode"/>
+        <result column="created_date" property="createdDate"/>
+        <result column="last_date" property="lastDate"/>
+        <result column="authority" property="authority"/>
+        <result column="image_path" property="imagePath"/>
+    </resultMap>
+    
+	<!-- Don't use parameterMap -->
+    <select id="selectOne" parameterType="String" resultMap="memberResultMap">
+      select * from member_tbl where email=#{email}
+    </select>
+
+    <select id="selectList" parameterType="map" resultMap="memberResultMap">
+      select * from member_tbl
+      <if test="keyword != NULL">
+      where last_name like CONCAT('%', #{keyword}, '%') or email like CONCAT('%', #{keyword}, '%') or authority like CONCAT('%', #{keyword}, '%')
+      </if>
+      order by 
+      <choose>
+      	<when test="order == 'creDate_asc'">created_date asc</when>
+      	<when test="order == 'creDate_desc'">created_date desc</when>
+      	<when test="order == 'lastDate_asc'">last_date asc</when>
+      	<when test="order == 'lastDate_desc'">last_date desc</when>
+      	<when test="order == 'idx_asc'">idx asc</when>
+      	<otherwise>idx desc</otherwise>
+ 	  </choose>
+ 	  limit #{offset},#{limit} 
+    </select>
+
+    <select id="count" resultType="int">
+      select count(*) from member_tbl
+    </select>
+
+	<select id="countByKeyword" parameterType="String" resultType="int">
+      select count(*) from member_tbl where last_name like CONCAT('%', #{keyword}, '%') or email like CONCAT('%', #{keyword}, '%') or authority like CONCAT('%', #{keyword}, '%')
+    </select>
+    
+    <insert id="insert" parameterType="MemberVO">
+      insert into member_tbl (first_name,last_name,email,password,address,postcode,created_date,last_date,image_path)
+      values(#{firstName},#{lastName},#{email},#{password},#{address},#{postcode},now(),now(),#{imagePath})
+    </insert>
+
+    <update id="update" parameterType="MemberVO">
+      update member_tbl set first_name=#{firstName},last_name=#{lastName},address=#{address},postcode=#{postcode},image_path=#{imagePath}
+      where email=#{email}
+    </update>
+
+    <delete id="delete" parameterType="String">
+      delete from member_tbl where email=#{email}
+    </delete>
+
+	<update id="updateDate" parameterType="String">
+      update member_tbl set last_date=now() where email=#{email}
+    </update>
+
+	<update id="updateData" parameterType="map">
+	  update member_tbl
+	  <set>
+	  	<if test="authority != null">authority=#{authority},</if>
+	  	<if test="password != null">password=#{password}</if>
+	  </set>
+	  where email=#{email}
+	</update>
+</mapper>

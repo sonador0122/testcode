@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.securesw.productsDao">
+    <resultMap type="ProductsVO" id="productsResultMap">
+        <id column="idx" property="idx"/>
+        <result column="name" property="name"/>
+        <result column="size" property="size"/>
+        <result column="material" property="material"/>
+        <result column="component" property="component"/>
+        <result column="options" property="options"/>
+        <result column="manufacturer" property="manufacturer"/>
+        <result column="madein" property="madein"/>
+        <result column="description" property="description"/>
+        <result column="price" property="price"/>
+        <result column="stock" property="stock"/>
+        <result column="member_idx" property="memberIdx"/>
+        <result column="member_email" property="memberEmail"/>
+        <result column="created_date" property="createdDate"/>
+    </resultMap>
+
+    <select id="selectCount" parameterType="String" resultType="int">
+        SELECT COUNT(*) FROM products_tbl WHERE member_email = #{memberId}
+    </select>
+
+    <select id="selectCountByKeyword" parameterType="hashmap" resultType="int">
+        SELECT COUNT(*) FROM products_tbl WHERE member_email = #{memberId}
+
+        <if test="keyword != NULL">
+            AND name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%') OR manufacturer LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectOne" parameterType="int" resultMap="productsResultMap">
+        SELECT * FROM products_tbl WHERE idx = #{VALUE}
+    </select>
+
+    <select id="selectList" parameterType="hashmap" resultMap="productsResultMap">
+        SELECT * FROM products_tbl WHERE member_email = #{memberId} ORDER BY idx DESC LIMIT #{rowBounds.offset},#{rowBounds.limit}
+    </select>
+
+    <select id="selectListByKeyword" parameterType="hashmap" resultMap="productsResultMap">
+        SELECT * FROM products_tbl WHERE member_email = #{memberId}
+
+        <if test="keyword != NULL">
+            AND name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%') OR manufacturer LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+
+        ORDER BY idx DESC LIMIT #{rowBounds.offset},#{rowBounds.limit}
+    </select>
+
+    <insert id="insert" parameterType="ProductsVO">
+        INSERT INTO products_tbl (name, size, material, component, options, manufacturer, madein, description, price, stock, member_idx, member_email, created_date)
+        VALUE (#{name},#{size},#{material},#{component},#{options},#{manufacturer},#{madein},#{description},#{price},#{stock},#{memberIdx},#{memberEmail},now())
+    </insert>
+
+    <insert id="insertBoardProducts" parameterType="hashmap">
+        INSERT INTO board_products_tbl (board_idx, products_idx) VALUE (#{boardIdx},#{productsIdx})
+    </insert>
+
+    <update id="update" parameterType="ProductsVO">
+        UPDATE products_tbl
+
+        <set>
+            <if test="name != null">name=#{name},</if>
+            <if test="size != null">size=#{size},</if>
+            <if test="material != null">material=#{material},</if>
+            <if test="component != null">component=#{component},</if>
+            <if test="options != null">options=#{options},</if>
+            <if test="manufacturer != null">manufacturer=#{manufacturer},</if>
+            <if test="madein != null">madein=#{madein},</if>
+            <if test="description != null">description=#{description},</if>
+            <if test="price != null">price=#{price},</if>
+            <if test="stock != null">stock=#{stock}</if>
+        </set>
+        WHERE idx = #{idx}
+    </update>
+
+    <delete id="delete" parameterType="int">
+        DELETE FROM products_tbl WHERE idx = #{VALUE}
+    </delete>
+
+    <update id="increaseProductsCount" parameterType="int">
+        UPDATE board_tbl SET products_count = products_count + 1 WHERE idx = #{VALUE}
+    </update>
+
+    <update id="decreaseProductsCount" parameterType="int">
+        UPDATE board_tbl SET products_count = products_count - 1 WHERE idx = #{VALUE}
+    </update>
+
+    <select id="selectBoardProductsByBoard" parameterType="int" resultType="int">
+        SELECT products_idx FROM board_products_tbl WHERE board_idx = #{VALUE}
+    </select>
+
+    <select id="selectBoardProductsByProducts" parameterType="int" resultType="int">
+        SELECT board_idx FROM board_products_tbl WHERE products_idx = #{VALUE}
+    </select>
+
+    <delete id="deleteBoardProductsByBoard" parameterType="int">
+        DELETE FROM board_products_tbl WHERE board_idx = #{VALUE}
+    </delete>
+
+    <delete id="deleteBoardProductsByProducts" parameterType="int">
+        DELETE FROM board_products_tbl WHERE products_idx = #{VALUE}
+    </delete>
+
+    <select id="selectCountForStock" parameterType="hashmap" resultType="int">
+        SELECT COUNT(*) FROM products_tbl WHERE stock <![CDATA[ <= ]]> #{maxStock} and stock <![CDATA[ >= ]]> #{minStock}
+
+        <if test="keyword != NULL">
+            AND name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%') OR manufacturer LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+
+    <select id="selectListForStock" parameterType="hashmap" resultMap="productsResultMap">
+        SELECT * FROM products_tbl WHERE stock <![CDATA[ <= ]]> #{maxStock} and stock <![CDATA[ >= ]]> #{minStock}
+
+        <if test="keyword != NULL">
+            AND name LIKE CONCAT('%', #{keyword}, '%') OR description LIKE CONCAT('%', #{keyword}, '%') OR manufacturer LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+
+        ORDER BY idx DESC LIMIT #{rowBounds.offset},#{rowBounds.limit}
+    </select>
+
+    <update id="decreaseStockCount" parameterType="hashmap">
+        UPDATE products_tbl SET stock = stock - #{quantity} WHERE idx = #{productsIdx}
+    </update>
+
+</mapper>

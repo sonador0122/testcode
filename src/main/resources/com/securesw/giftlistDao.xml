@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        
+<mapper namespace="com.securesw.giftlistDao">
+    <resultMap type="GiftlistVO" id="giftlistResultMap">
+    	<result column="board_idx" property="boardIdx"/>
+    	<result column="member_email" property="memberEmail"/>
+    	<result column="idx" property="idx"/>
+    	<result column="total_price" property="price"/>
+    	<result column="title" property="title"/>
+    	<result column="image_path" property="imagePath"/>
+    </resultMap>
+    
+    <insert id="insert" parameterType="map">
+      insert into giftlist_tbl (board_idx, member_email)
+      values(#{boardIdx},#{memberEmail})
+    </insert>
+    
+    <select id="count" resultType="int">
+      select count(*) from  giftlist_tbl
+    </select>
+    
+    <select id="countByKeyword" parameterType="String" resultType="int">
+      select count(*) from  giftlist_tbl where name like CONCAT('%', #{keyword}, '%')
+    </select>
+    
+    <select id="selectList" parameterType="map" resultMap="giftlistResultMap">
+      select gift.board_idx, gift.idx, total_price, title, gift.member_email, image_path from  giftlist_tbl as gift
+      inner join board_tbl as board on gift.board_idx=board.idx
+      <choose>
+      	<when test="keyword != NULL">
+      	where title like CONCAT('%', #{keyword}, '%') and gift.member_email like CONCAT('%', #{keyword}, '%')
+      	</when>
+      	<otherwise>
+      	where gift.member_email like #{memberEmail}
+      	</otherwise>
+      </choose>
+      order by gift.idx desc
+ 	  limit #{offset},#{limit}
+    </select>
+    
+    <delete id="delete" parameterType="map">
+      delete from  giftlist_tbl where member_email=#{memberEmail} and board_idx=#{boardIdx}
+    </delete>
+    
+    <select id="selectOne" parameterType="map" resultMap="giftlistResultMap">
+      select * from  giftlist_tbl where member_email=#{memberEmail} and board_idx=#{boardIdx}
+    </select>
+</mapper>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.securesw.ordersDao">
+    <resultMap type="OrdersVO" id="ordersResultMap">
+    	<id column="idx" property="idx"/>
+    	<result column="order_date" property="orderDate"/>
+    	<result column="order_now" property="orderNow"/>
+    	<result column="member_email" property="memberEmail"/>
+    	<result column="member_name" property="memberName"/>
+    	<result column="address" property="address"/>
+    	<result column="postcode" property="postcode"/>
+    	<result column="quantity" property="quantity"/>
+    	<result column="total_price" property="totalPrice"/>
+    	<result column="receiver" property="receiver"/>
+    	<result column="board_idx" property="boardIdx"/>
+    	<result column="title" property="title"/>
+    </resultMap>
+
+	<select id="selectList" parameterType="map" resultMap="ordersResultMap">
+     select orders.idx, orders.order_date, orders.order_now, orders.member_email, orders.member_name,
+     orders.quantity, orders.total_price, orders.receiver, orders.board_idx, board.title from orders_tbl as orders
+     inner join board_tbl as board on orders.board_idx=board.idx
+     where orders.member_email like #{memberEmail}
+     order by orders.idx desc
+ 	 limit #{offset},#{limit} 
+    </select>
+
+    <select id="selectTotalList" parameterType="map" resultMap="ordersResultMap">
+        select orders.idx, orders.order_date, orders.order_now, orders.member_email, orders.member_name,
+        orders.quantity, orders.total_price, orders.receiver, orders.board_idx, board.title from orders_tbl as orders
+        inner join board_tbl as board on orders.board_idx=board.idx
+        <if test="keyword != NULL">
+            where orders.member_email LIKE CONCAT('%', #{keyword}, '%') OR orders.member_name LIKE CONCAT('%', #{keyword}, '%') or orders.idx like CONCAT('%', #{keyword}, '%')
+        </if>
+        order by orders.idx desc
+        limit #{offset},#{limit}
+    </select>
+    
+    <delete id="delete" parameterType="int">
+      delete from orders_tbl where idx=#{idx}
+    </delete>
+    
+    <select id="count" resultType="int">
+      select count(*) from orders_tbl
+    </select>
+    
+    <select id="countByKeyword" parameterType="String" resultType="int">
+      select count(*) from orders_tbl
+      where member_email like CONCAT('%', #{keyword}, '%') or member_name like CONCAT('%', #{keyword}, '%')
+    </select>
+
+    <select id="countTotalList" parameterType="map" resultType="int">
+        select count(*) from orders_tbl
+        <if test="keyword != NULL">
+            WHERE member_email LIKE CONCAT('%', #{keyword}, '%') OR member_name LIKE CONCAT('%', #{keyword}, '%') OR idx LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+    </select>
+    
+    <insert id="insert" parameterType="OrdersVO">
+        INSERT INTO orders_tbl (order_date,order_now, member_email, member_name, address, postcode, quantity,total_price,receiver,board_idx)
+        VALUE (now(),#{orderNow},#{memberEmail},#{memberName},#{address},#{postcode},#{quantity},#{totalPrice},#{receiver},#{boardIdx})
+    </insert>
+</mapper>
